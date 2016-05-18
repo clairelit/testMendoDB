@@ -1,0 +1,127 @@
+extends layout
+
+block content
+  h1= title
+  
+
+  table#mendo.display.hover.dataTable.stripe.table-.table-striped.table-bordered
+    thead
+      tr
+        th Surname
+        th First Name
+        th County (Destination)
+        th Town (Origin)
+        th Country
+        th Year
+
+  script.
+
+    /* 
+      simple template function to search for each property in the object and find it in 
+      the template and replace it with the value
+      use # property as placeholder.
+    */    
+    function template(temp,data) {
+      var result=temp;
+      for(prop in data) {
+        result = result.replace("#"+prop,data[prop])
+      }
+      return result;
+    }
+
+    // function to init table
+    function dataTableInit(data) {
+
+      $("#mendo").DataTable( {
+          data:data ,
+         
+          columns: [
+            /*          { render : function(a,b,c) { 
+                console.log("render col 0");
+                return "";
+              }
+            },*/
+            { data: "surname" }, 
+            { data: "firstName" },
+            { data: "county" },            
+            { data: "town" }, 
+            { data: "country" },           
+            { data: "year" }
+          ],
+          // called by DataTable when a new row
+          createdRow: function ( row, data, index ) {
+            console.log("adding row");
+            row.id=data._id;  /// give the row an id
+            $(row).addClass("clickable"); //
+          }
+        }); // dataTable constructor
+    
+    }
+
+    function dataTableAddDetails(data) {
+      console.log("adding details to all rows");
+      // find the row for each object in list
+      $.each(data , function(index,obj) {
+
+        // produce the row to insert
+
+        // template for the details
+        var 
+          temp = "<div>"+
+                    "<p>Year of Transmission  - #year</p>"+
+                    "<p>Date of Transmission  - #date</p>"+
+                    "<p>Transmission Granted? - #transmission</p>"+
+                    "<p> More info : #moreInformation</p>"
+                    "<img src='#photoLocation'/>"+
+                  "</div>";
+
+        var details = template( temp, obj );
+        
+        // template for the row
+        temp = "<tr class='collapsed '>" +
+                  "<td colspan='#cols'>#details</td>"+
+                "</tr>";
+
+        var html = template( temp ,
+          {
+            cols : 6,           // row.cells.length,
+            details : details
+          }
+        );
+        
+        // find the data row and insert the hidden row after
+        $("#"+obj._id).after(html);
+
+        $("#"+obj._id).click(function(event) {
+          $(this).  // the row
+            next().toggleClass("collapsed");   // the details
+        });
+
+      }); // end for each row
+      
+
+    }
+
+    $( document ).ready(function() {
+      //createTable();
+      
+     $.getJSON("/data/mendoPeopleList.json", function(data) {
+
+         $("#mendo").on('draw.dt',function(){
+          console.log("table drawn...add hidden details ");
+          dataTableAddDetails(data);
+        });
+            
+        dataTableInit(data);
+
+
+      }); // getJSON 
+
+      // now 
+
+    }); // docready
+
+  #container
+
+
+
